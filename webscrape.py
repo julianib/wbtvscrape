@@ -16,6 +16,6 @@ for i in range(1, 10):
     except Exception as ex:
         print(f"Exception on POST for #{i}: {ex}")
 
-    test
+    
 
 print(response.text[:50])
