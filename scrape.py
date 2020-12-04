@@ -18,6 +18,7 @@ content = {
 
 
 output = {
+    "elapsed_time": 0,
     "range": {
         "first": FIRST,
         "last": LAST
@@ -71,7 +72,6 @@ for wbtvNumber in range(FIRST, LAST + 1):
 
 elapsed_time = time.time() - start_time
 output["elapsed_time"] = elapsed_time
-output["ms_per_request"] = round(float(elapsed_time) / TOTAL_REQUESTS * 1000)
 
 print("Saving to output.json...")
 with open("output.json", "w", encoding="utf8") as f:
