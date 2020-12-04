@@ -3,15 +3,15 @@ import json
 import os
 import time
 
-# settings
-FIRST = 1
-LAST = 300
-DONG_ON_COMPLETE = True
+# setup
+FIRST = 44230
+LAST = 44230
+DONG_ON_COMPLETE = False  # set to True for dong sound on script completion
 URL = "http://www.bureauwbtv.nl/tolkvertaler-search/api/search/s"
-TIMEOUT = 5
+TIMEOUT = 10
 headers = {
 }
-content = {
+json_content = {
     "searchType": "wbtv_search",
     "wbtvNumber": None
 }
@@ -36,11 +36,11 @@ request_successes = 0
 request_exceptions = 0
 for wbtvNumber in range(FIRST, LAST + 1):
     request_number += 1
-    content["wbtvNumber"] = wbtvNumber
+    json_content["wbtvNumber"] = wbtvNumber
 
     try:
         response = requests.post(URL, headers=headers,
-                                 json=content, timeout=TIMEOUT)
+                                 json=json_content, timeout=TIMEOUT)
         request_successes += 1
 
         time_now = time.time()
@@ -65,18 +65,26 @@ for wbtvNumber in range(FIRST, LAST + 1):
             f"{time_now_formatted} Received #{wbtvNumber} (exists={exists}). {round(request_number / TOTAL_REQUESTS * 100, 1)}%, {remaining_time_formatted} left")
 
     except Exception as ex:
-        output["exceptions"].append(ex + "\nRaw response:\n" + response.raw)
-        print(f"Exception on POST request for wbtvNumber={wbtvNumber}: {ex}")
+        output["exceptions"].append(
+            str(wbtvNumber) + "\n" + str(ex) +
+            "\n\nRaw response:\n" + str(response.text)
+        )
+        print(
+            f"Exception on POST request for wbtvNumber={str(wbtvNumber)}: {str(ex)}"
+        )
         request_exceptions += 1
-        break
 
-elapsed_time = time.time() - start_time
+time_now = time.time()
+elapsed_time = time_now - start_time
 output["elapsed_time"] = elapsed_time
 
-print("Saving to output.json...")
-with open("output.json", "w", encoding="utf8") as f:
+time_now_formatted = time.strftime("%Y%m%dT%H%M%S", time.gmtime(time_now))
+filename_formatted = f"output_{time_now_formatted}.json"
+
+print(f"Saving to {filename_formatted}...")
+with open(filename_formatted, "w", encoding="utf8") as f:
     json.dump(output, f, indent=2, ensure_ascii=False)
-    size_mb = round(os.path.getsize('output.json') / 1048576.0, 1)
+    size_mb = round(os.path.getsize(filename_formatted) / 1048576.0, 1)
 
     print(f"Saved. File size: {size_mb} MB")
 
