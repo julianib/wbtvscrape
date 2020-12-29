@@ -4,18 +4,22 @@ import os
 import time
 
 # setup
-FIRST = 44230
-LAST = 44230
-DONG_ON_COMPLETE = False  # set to True for dong sound on script completion
+FIRST = 1
+LAST = 1
+DING_ON_COMPLETE = False  # set to True for dong sound on script completion
 URL = "http://www.bureauwbtv.nl/tolkvertaler-search/api/search/s"
 TIMEOUT = 10
+
+# @todo grequests threading speedup?
+# @todo functions
+
 headers = {
 }
+
 json_content = {
     "searchType": "wbtv_search",
     "wbtvNumber": None
 }
-
 
 output = {
     "elapsed_time": 0,
@@ -23,18 +27,21 @@ output = {
         "first": FIRST,
         "last": LAST
     },
+    "errored_customers": [],
     "exceptions": [],
     "customers": []
 }
 
 TOTAL_REQUESTS = LAST - FIRST + 1
+
+
 print(f"Starting requests. {FIRST} to {LAST}, ({TOTAL_REQUESTS} total)...")
 
 start_time = time.time()
 request_number = 0
 request_successes = 0
 request_exceptions = 0
-for wbtvNumber in range(FIRST, LAST + 1):
+for wbtvNumber in range(FIRST, LAST + 1):  # range(FIRST, LAST + 1)
     request_number += 1
     json_content["wbtvNumber"] = wbtvNumber
 
@@ -65,12 +72,19 @@ for wbtvNumber in range(FIRST, LAST + 1):
             f"{time_now_formatted} Received #{wbtvNumber} (exists={exists}). {round(request_number / TOTAL_REQUESTS * 100, 1)}%, {remaining_time_formatted} left")
 
     except Exception as ex:
-        output["exceptions"].append(
-            str(wbtvNumber) + "\n" + str(ex) +
-            "\n\nRaw response:\n" + str(response.text)
-        )
+        output["errored_customers"].append(wbtvNumber)
+        try:
+            output["exceptions"].append(
+                str(wbtvNumber) + "\n" + str(ex) +
+                "\n\nRaw response:\n" + str(response.text)
+            )
+        except Exception:
+            output["exceptions"].append(
+                str(wbtvNumber) + "\n" + str(ex) +
+                "\n\nRaw response:\n<no response>"
+            )
         print(
-            f"Exception on POST request for wbtvNumber={str(wbtvNumber)}: {str(ex)}"
+            f"Exception on request for wbtvNumber={str(wbtvNumber)}: {str(ex)}"
         )
         request_exceptions += 1
 
@@ -90,8 +104,9 @@ with open(filename_formatted, "w", encoding="utf8") as f:
 
 elapsed_time_formatted = time.strftime(
     '%H:%M:%S', time.gmtime(elapsed_time))
-print(f"Finished {TOTAL_REQUESTS} requests in {elapsed_time_formatted}. Exceptions: {request_exceptions}")
+print(
+    f"Finished {TOTAL_REQUESTS} requests in {elapsed_time_formatted}. Exceptions: {request_exceptions} {output['errored_customers']}")
 
-if DONG_ON_COMPLETE:
+if DING_ON_COMPLETE:
     import playsound
-    playsound.playsound("dong.mp3")
+    playsound.playsound("ding.mp3")
