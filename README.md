@@ -2,4 +2,4 @@
 
 ## Dependencies:
 
-- playsound (optional, completion notification)
+- playsound (optional)
